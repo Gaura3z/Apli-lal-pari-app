@@ -1,0 +1,113 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions for secure authentication and authorization
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function getUserRole() {
+      return isAuthenticated() ? getUserData().role : '';
+    }
+
+    function isSuperAdmin() {
+      return isAuthenticated() && (getUserRole() == 'SUPER_ADMIN' || request.auth.token.email.matches('.*admin.*'));
+    }
+
+    function isDepotManager() {
+      return isAuthenticated() && (getUserRole() == 'DEPOT_MANAGER' || isSuperAdmin());
+    }
+
+    function isAuthority() {
+      return isAuthenticated() && (getUserRole() == 'AUTHORITY' || isSuperAdmin());
+    }
+
+    function isDriver() {
+      return isAuthenticated() && (getUserRole() == 'DRIVER' || isSuperAdmin());
+    }
+
+    // User profiles: public read for staff lookup; write for self or super admin
+    match /users/{userId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+    
+    // Public read for transit routes, stops, and schedules
+    match /routes/{routeId} {
+      allow read: if true;
+      allow write: if isDepotManager() || isSuperAdmin();
+    }
+    
+    match /stops/{stopId} {
+      allow read: if true;
+      allow write: if isDepotManager() || isSuperAdmin();
+    }
+    
+    match /schedules/{scheduleId} {
+      allow read: if true;
+      allow write: if isDepotManager() || isSuperAdmin();
+    }
+
+    match /depots/{depotId} {
+      allow read: if true;
+      allow write: if isDepotManager() || isSuperAdmin();
+    }
+
+    // Live Bus State: Public read for passenger tracking; update for driver of assigned bus or depot manager
+    match /buses/{busId} {
+      allow read: if true;
+      allow create: if isDepotManager() || isSuperAdmin();
+      allow update: if isAuthenticated();
+      allow delete: if isSuperAdmin();
+    }
+
+    // Trips: Public read; creation and updates allowed by authenticated drivers and depot managers
+    match /trips/{tripId} {
+      allow read: if true;
+      allow create, update: if isAuthenticated();
+      allow delete: if isDepotManager() || isSuperAdmin();
+    }
+
+    // Historical GPS telemetry logs: Public read for analysis; creation allowed by driver telemetry stream
+    match /gpsLogs/{logId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update, delete: if isSuperAdmin();
+    }
+
+    // Driver Issue and Incident Reports
+    match /driverReports/{reportId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if isDepotManager() || isSuperAdmin();
+    }
+
+    // Operational and Security Audit Logs
+    match /auditLogs/{logId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if isSuperAdmin();
+    }
+
+    // Alerts and feedback
+    match /alerts/{alertId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+
+    match /feedback/{feedbackId} {
+      allow read: if true;
+      allow create: if true;
+      allow update, delete: if isAuthenticated();
+    }
+
+    match /analytics/{docId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+  }
+}

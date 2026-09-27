@@ -1,0 +1,143 @@
+{
+  "entities": {
+    "user": {
+      "title": "User",
+      "description": "User profile with role-based access control for passengers and staff",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "role": { "type": "string", "enum": ["PASSENGER", "DRIVER", "DEPOT_MANAGER", "AUTHORITY", "ANALYST", "SUPER_ADMIN"] },
+        "status": { "type": "string", "enum": ["ACTIVE", "SUSPENDED"] },
+        "depotId": { "type": "string" },
+        "assignedBusId": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["userId", "name", "email", "role"]
+    },
+    "bus": {
+      "title": "Bus",
+      "description": "Live bus record and current telemetry state",
+      "type": "object",
+      "properties": {
+        "busId": { "type": "string" },
+        "registrationNumber": { "type": "string" },
+        "busType": { "type": "string" },
+        "depotId": { "type": "string" },
+        "routeId": { "type": "string" },
+        "driverId": { "type": "string" },
+        "capacity": { "type": "number" },
+        "currentPassengerCount": { "type": "number" },
+        "occupancyPercentage": { "type": "number" },
+        "occupancySource": { "type": "string" },
+        "status": { "type": "string", "enum": ["ACTIVE", "DELAYED", "MAINTENANCE", "OFFLINE", "COMPLETED", "STANDBY"] },
+        "tripStatus": { "type": "string", "enum": ["NOT_STARTED", "ACTIVE", "PAUSED", "COMPLETED", "CANCELLED"] },
+        "gpsStatus": { "type": "string", "enum": ["CONNECTED", "SIGNAL_LOST", "SEARCHING"] },
+        "currentSpeed": { "type": "number" },
+        "heading": { "type": "number" },
+        "latitude": { "type": "number" },
+        "longitude": { "type": "number" },
+        "nextStopName": { "type": "string" },
+        "lastUpdated": { "type": "string" }
+      },
+      "required": ["busId", "registrationNumber", "status"]
+    },
+    "trip": {
+      "title": "Trip",
+      "description": "Scheduled or active bus trip log",
+      "type": "object",
+      "properties": {
+        "tripId": { "type": "string" },
+        "busId": { "type": "string" },
+        "routeId": { "type": "string" },
+        "driverId": { "type": "string" },
+        "status": { "type": "string", "enum": ["NOT_STARTED", "ACTIVE", "PAUSED", "COMPLETED", "CANCELLED"] },
+        "startTime": { "type": "string" },
+        "endTime": { "type": "string" },
+        "currentDelayMinutes": { "type": "number" },
+        "averageOccupancy": { "type": "number" }
+      },
+      "required": ["tripId", "busId", "driverId", "status"]
+    },
+    "gpsLog": {
+      "title": "GPSLog",
+      "description": "Historical GPS telemetry position log packet",
+      "type": "object",
+      "properties": {
+        "logId": { "type": "string" },
+        "busId": { "type": "string" },
+        "tripId": { "type": "string" },
+        "latitude": { "type": "number" },
+        "longitude": { "type": "number" },
+        "speed": { "type": "number" },
+        "heading": { "type": "number" },
+        "timestamp": { "type": "string" },
+        "isSimulated": { "type": "boolean" }
+      },
+      "required": ["busId", "latitude", "longitude", "timestamp"]
+    },
+    "driverReport": {
+      "title": "DriverReport",
+      "description": "Driver reported incident, breakdown, or traffic congestion",
+      "type": "object",
+      "properties": {
+        "reportId": { "type": "string" },
+        "driverId": { "type": "string" },
+        "driverName": { "type": "string" },
+        "busId": { "type": "string" },
+        "tripId": { "type": "string" },
+        "issueType": { "type": "string", "enum": ["VEHICLE_PROBLEM", "GPS_PROBLEM", "ROUTE_PROBLEM", "TRAFFIC_DELAY", "EMERGENCY", "OTHER"] },
+        "description": { "type": "string" },
+        "severity": { "type": "string", "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"] },
+        "timestamp": { "type": "string" },
+        "status": { "type": "string", "enum": ["PENDING", "ACKNOWLEDGED", "RESOLVED"] }
+      },
+      "required": ["reportId", "driverId", "busId", "issueType", "description", "timestamp"]
+    },
+    "auditLog": {
+      "title": "AuditLog",
+      "description": "System and driver operational audit trails",
+      "type": "object",
+      "properties": {
+        "logId": { "type": "string" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "role": { "type": "string" },
+        "action": { "type": "string" },
+        "busId": { "type": "string" },
+        "tripId": { "type": "string" },
+        "timestamp": { "type": "string" },
+        "details": { "type": "string" }
+      },
+      "required": ["logId", "userId", "action", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "user",
+      "description": "Registered and demo user profiles with roles"
+    },
+    "/buses/{busId}": {
+      "schema": "bus",
+      "description": "Live bus status and real-time telemetry state"
+    },
+    "/trips/{tripId}": {
+      "schema": "trip",
+      "description": "Scheduled and active transit trips"
+    },
+    "/gpsLogs/{logId}": {
+      "schema": "gpsLog",
+      "description": "Historical GPS location logs"
+    },
+    "/driverReports/{reportId}": {
+      "schema": "driverReport",
+      "description": "Driver reported alerts and breakdown tickets"
+    },
+    "/auditLogs/{logId}": {
+      "schema": "auditLog",
+      "description": "Security and operational audit trail records"
+    }
+  }
+}

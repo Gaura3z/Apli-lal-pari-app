@@ -1,0 +1,6 @@
+{
+  "name": "Anveshana Bus Tracker - Live Transit & Telemetry",
+  "description": "Live public bus transit tracking, real-time GPS progression, timetable search, and depot operations dashboard.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
